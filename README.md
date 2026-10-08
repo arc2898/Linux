@@ -3,4 +3,5 @@ Tview a terminal based video player and image viewer completely written in GO la
 and i made an universal package manager and it is available on main repo page
 also latest update Linux barnd modifier, modify any Linux dirsro branding simplly
 still working on some, I leave them as soon as possible
-
+---
+Max i cover all Major distros 
