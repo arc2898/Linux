@@ -1,0 +1,43 @@
+/* EVERLUMEN GTK accents — pair with a compatible GTK theme */
+@define-color everlumen_bg #0b1020;
+@define-color everlumen_surface #151c2e;
+@define-color everlumen_text #e8f4f4;
+@define-color everlumen_muted #9aabc1;
+@define-color everlumen_mint #8fffd8;
+@define-color everlumen_lilac #c6a7ff;
+@define-color everlumen_petal #ffb6d9;
+
+* {
+  -gtk-secondary-caret-color: @everlumen_mint;
+  caret-color: @everlumen_mint;
+}
+
+window, .background {
+  background-color: @everlumen_bg;
+  color: @everlumen_text;
+}
+
+button {
+  background-image: none;
+  background-color: @everlumen_surface;
+  color: @everlumen_text;
+  border: 1px solid alpha(@everlumen_mint, 0.22);
+  border-radius: 12px;
+  padding: 6px 12px;
+}
+
+button:hover {
+  background-color: alpha(@everlumen_mint, 0.12);
+  border-color: @everlumen_mint;
+}
+
+entry, textview, list, row {
+  background-color: @everlumen_surface;
+  color: @everlumen_text;
+  border-radius: 10px;
+}
+
+selection {
+  background-color: @everlumen_mint;
+  color: @everlumen_bg;
+}
