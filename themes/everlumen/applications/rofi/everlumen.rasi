@@ -1,0 +1,43 @@
+* {
+  bg: #0b1020ee;
+  surface: #151c2e;
+  text: #e8f4f4;
+  muted: #9aabc1;
+  mint: #8fffd8;
+  lilac: #c6a7ff;
+  petal: #ffb6d9;
+  background-color: transparent;
+  text-color: @text;
+  font: "Inter 11";
+}
+window {
+  width: 42%;
+  border: 1px;
+  border-color: @mint;
+  border-radius: 24px;
+  background-color: @bg;
+  padding: 20px;
+}
+mainbox { background-color: transparent; spacing: 12px; }
+inputbar {
+  background-color: @surface;
+  border: 1px;
+  border-color: #33455668;
+  border-radius: 14px;
+  padding: 12px;
+  children: [prompt, entry];
+}
+prompt { text-color: @mint; padding: 0 8px 0 0; }
+entry { placeholder: "Search the garden…"; }
+listview { lines: 7; spacing: 6px; background-color: transparent; }
+element {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background-color: transparent;
+}
+element selected {
+  background-color: #338fffd8;
+  text-color: @text;
+  border: 1px;
+  border-color: @mint;
+}
