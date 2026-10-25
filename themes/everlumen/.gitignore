@@ -1,0 +1,4 @@
+# Local desktop overrides and editor files
+*.local
+.DS_Store
+Thumbs.db
