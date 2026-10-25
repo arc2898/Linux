@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.0
-- Initial public repository layout for EVERLUMEN.
-- Added Hyprland style fragment, GTK and Kitty palettes.
-- Added starter Quickshell panel and four palette token sets.
-- Added Rofi and Neovim styling.
-- Added user-local installer, uninstall helper, and vector wallpaper.
+## 0.2.0 — NEUROGLASS rebuild
+- Replaced the previous soft pastel direction with a neon cyberpunk/glass HUD design language.
+- Added four palette profiles, an interactive customization lab, workspace controls and a UPM launch action.
+- Added distro-family scan, Hyprland/Quickshell diagnostics, UPM-first/native dependency routing, optional GUI utilities, Nix/source fallback and isolated smoke tests.
+- Added SVG wallpaper, desktop preview and organism mark plus companion application themes.
+- Persistent GUI preferences and live target-machine QML validation are not claimed.

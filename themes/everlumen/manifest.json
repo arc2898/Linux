@@ -1,0 +1,16 @@
+{
+  "name": "EVERLUMEN // NEUROGLASS",
+  "version": "0.2.0",
+  "tagline": "Blacklight bioglass, neon HUD and a signal garden for Hyprland",
+  "license": "MIT",
+  "status": "experimental; target system testing required",
+  "targets": ["Hyprland 0.55+ Lua", "legacy Hyprland hyprlang", "Quickshell 0.3.x", "GTK CSS", "Kitty", "Rofi", "Neovim", "Universal Package Manager CLI wrapper"],
+  "palettes": ["Void Pulse", "Phosphor//X", "Ultraviolet", "Toxic Petal"],
+  "features": ["cyberpunk glass HUD", "four neon palettes", "interactive customization lab", "distro and dependency diagnostics", "UPM-first routing with native fallback", "Nix/source Quickshell fallback", "optional GUI utilities", "backup-aware installer"],
+  "dependencyStrategy": {
+    "primary": "UPM explicit native adapter where safe",
+    "fallback": "native distribution package manager",
+    "lastResort": "Nix user profile then Quickshell source build",
+    "archPacman": "full pacman -Syu --needed transaction; bypass UPM Pacman adapter"
+  }
+}

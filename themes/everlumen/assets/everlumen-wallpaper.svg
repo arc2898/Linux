@@ -1,29 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
-  <defs>
-    <radialGradient id="bg"><stop stop-color="#1c2940"/><stop offset="1" stop-color="#080d1a"/></radialGradient>
-    <linearGradient id="petal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8fffd8"/><stop offset=".52" stop-color="#c6a7ff"/><stop offset="1" stop-color="#ffb6d9"/></linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="24"/></filter>
-  </defs>
-  <rect width="3840" height="2160" fill="url(#bg)"/>
-  <g opacity=".16" stroke="#8fffd8" fill="none" stroke-width="2">
-    <circle cx="1920" cy="1080" r="460"/><circle cx="1920" cy="1080" r="650"/>
-    <circle cx="1920" cy="1080" r="850"/><ellipse cx="1920" cy="1080" rx="1300" ry="560" transform="rotate(-24 1920 1080)"/>
-  </g>
-  <circle cx="1920" cy="1080" r="270" fill="#8fffd8" opacity=".2" filter="url(#glow)"/>
-  <g transform="translate(1920 1080)">
-    <g fill="url(#petal)" opacity=".88">
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(0)"/>
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(60)"/>
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(120)"/>
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(180)"/>
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(240)"/>
-      <ellipse cy="-185" rx="100" ry="250" transform="rotate(300)"/>
-    </g>
-    <circle r="100" fill="#0b1020" stroke="#e8f4f4" stroke-opacity=".8" stroke-width="5"/>
-    <circle r="38" fill="#8fffd8"/>
-  </g>
-  <g fill="#e8f4f4" opacity=".6">
-    <circle cx="700" cy="420" r="5"/><circle cx="3030" cy="560" r="7"/><circle cx="890" cy="1640" r="4"/>
-    <circle cx="2820" cy="1510" r="5"/><circle cx="2480" cy="300" r="4"/><circle cx="1430" cy="1850" r="6"/>
-  </g>
+<defs>
+ <radialGradient id="bg"><stop stop-color="#17182e"/><stop offset=".55" stop-color="#0b0d1c"/><stop offset="1" stop-color="#05060c"/></radialGradient>
+ <linearGradient id="prism" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3bf7ee"/><stop offset=".38" stop-color="#9870ff"/><stop offset=".72" stop-color="#ff42d0"/><stop offset="1" stop-color="#c6ff3b"/></linearGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="45"/></filter>
+ <pattern id="grid" width="96" height="96" patternUnits="userSpaceOnUse"><path d="M96 0H0V96" fill="none" stroke="#3bf7ee" stroke-opacity=".07" stroke-width="2"/></pattern>
+</defs>
+<rect width="3840" height="2160" fill="url(#bg)"/><rect width="3840" height="2160" fill="url(#grid)"/>
+<circle cx="2020" cy="1090" r="420" fill="#3bf7ee" opacity=".15" filter="url(#blur)"/>
+<circle cx="2020" cy="1090" r="310" fill="#ff42d0" opacity=".12" filter="url(#blur)"/>
+<g fill="none" stroke="url(#prism)" stroke-width="3" opacity=".35">
+ <circle cx="2020" cy="1090" r="380"/><circle cx="2020" cy="1090" r="525"/><circle cx="2020" cy="1090" r="720"/><circle cx="2020" cy="1090" r="945"/>
+ <ellipse cx="2020" cy="1090" rx="1390" ry="560" transform="rotate(-29 2020 1090)"/><ellipse cx="2020" cy="1090" rx="1200" ry="650" transform="rotate(43 2020 1090)"/>
+</g>
+<g transform="translate(2020 1090)">
+ <g fill="url(#prism)" fill-opacity=".72" stroke="#ecfaff" stroke-opacity=".24" stroke-width="4">
+  <path d="M0-370 88-140 316-190 210 17 367 184 117 202 44 367-104 242-337 291-273 70-378-85-136-144Z"/>
+  <path d="M0-275 77-80 227-95 135 42 228 143 75 129 12 262-84 162-224 197-179 53-242-54-97-92Z" transform="rotate(28)"/>
+ </g>
+ <circle r="105" fill="#080811" stroke="#3bf7ee" stroke-width="8"/><circle r="41" fill="#c6ff3b"/><circle r="17" fill="#080811"/>
+</g>
+<g stroke="url(#prism)" stroke-width="4" fill="none" opacity=".6">
+ <path d="M0 340H420L560 480H890"/><path d="M3840 390H3480L3360 510H3090"/><path d="M0 1780H530L670 1640H930"/><path d="M3840 1810H3480L3350 1680H3020"/>
+ <path d="M1120 0V180L1240 300"/><path d="M2810 2160V1960L2700 1850"/>
+</g>
+<g fill="#ecfaff" opacity=".7">
+ <circle cx="710" cy="420" r="7"/><circle cx="3030" cy="510" r="6"/><circle cx="890" cy="1640" r="5"/><circle cx="2820" cy="1510" r="8"/><circle cx="2470" cy="275" r="5"/><circle cx="1430" cy="1870" r="7"/><circle cx="3350" cy="970" r="4"/><circle cx="510" cy="1050" r="5"/>
+</g>
+<rect width="3840" height="2160" fill="#080811" opacity=".12"/>
 </svg>

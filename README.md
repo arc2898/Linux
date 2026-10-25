@@ -1,7 +1,18 @@
-The packages i made for <img alt="Linux" src="https://img.shields.io/badge/GNU/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" /> even it is CLI or GUI they were published to here so you can access them from here
-Tview a terminal based video player and image viewer completely written in GO lang and i used this to play spider-man across the spider verse and better if you use any terminal like kitty so you will get better image on it
-and i made an universal package manager and it is available on main repo page
-also latest update Linux barnd modifier, modify any Linux dirsro branding simplly
-still working on some, I leave them as soon as possible
----
-Max i cover all Major distros 
+# Linux projects
+
+Utilities and desktop projects created for GNU/Linux systems.
+
+- **Tview** — terminal-based video player and image viewer.
+- **Universal Package Manager** — unify common package-management operations across supported package managers: https://github.com/arc2898/Universal-Package-Manager
+- **Linux Brand Modifier** — tools for customizing Linux distribution branding.
+
+## EVERLUMEN // NEUROGLASS
+
+A neon cyberpunk/glass-shell theme for Hyprland and Quickshell, with an interactive customization lab, companion app themes, and a distro-aware installer that detects dependencies and tries UPM before a safe native fallback.
+
+- [Open the EVERLUMEN theme source](themes/everlumen/)
+- [Desktop concept preview](themes/everlumen/assets/desktop-preview.svg)
+- [Installation and dependency detection](themes/everlumen/docs/INSTALLER.md)
+- [Universal Package Manager integration](themes/everlumen/applications/upm/README.md)
+
+The installer is user-local by default. Package operations are opt-in; installing Hyprland itself needs the explicit --install-hyprland option. The theme is experimental and should be tested with the installed Hyprland and Quickshell versions.

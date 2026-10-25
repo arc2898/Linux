@@ -1,27 +1,25 @@
-# Customization
+# NEUROGLASS customization
 
-## Palette
-Edit `quickshell/everlumen/palette.js`. The default palette is Abyss Bloom:
-- Background: `#0b1020`
-- Surface: `#151c2e`
-- Text: `#e8f4f4`
-- Mint: `#8fffd8`
-- Lilac: `#c6a7ff`
-- Petal: `#ffb6d9`
+## Palettes
+Edit quickshell/everlumen/palette.js. The four initial profiles are:
+- Void Pulse: cyan + acid-lime on ink-black glass.
+- Phosphor//X: green phosphor and cleanroom contrast.
+- Ultraviolet: violet and magenta haze.
+- Toxic Petal: mint, acid-lime and warm amber.
 
-Other palettes in the token file are Lotus Orbit, Glacier Dream, and Solar Petal.
+Each profile exposes background, surface, raised, line, text, muted, cyan, acid, pink, violet, orange and red tokens.
+
+## The live lab
+The Quickshell lab controls palette, glass/solid surface, glow, scanlines, angular geometry, compact dock, workspace visibility, dock position, 12/24-hour clock, seconds and text scale. Current selections are session-local; they reset when the shell is relaunched.
 
 ## Hyprland
-The `.conf` file is a fragment; include it from your main config only after reviewing it. The Lua fragment is illustrative and may need adapting to the exact Lua configuration API of your Hyprland version.
+The modern Lua fragment is for the Lua configuration workflow. Only load it from an existing config after checking the installed Hyprland version and keeping a backup. The legacy hyprlang fragment is for older configurations. Neither file intentionally changes monitor arrangements or keybindings.
 
-## Quickshell
-The QML panel is a starting point. Quickshell API availability can vary by release; verify workspace model properties against your installed version before enabling autostart.
+## Applications
+- Kitty: include terminal/kitty.conf.
+- Rofi: select applications/rofi/everlumen.rasi.
+- Neovim: source applications/neovim/everlumen.lua.
+- GTK: merge gtk/everlumen.css into a compatible theme layer.
+- UPM: the button and wrapper invoke the actual UPM program; package logic remains upstream.
 
-## Apps
-- Kitty: include `terminal/kitty.conf`.
-- Rofi: use `applications/rofi/everlumen.rasi` with `rofi -theme`.
-- Neovim: source `applications/neovim/everlumen.lua` from your init file.
-- GTK: merge the CSS into a compatible GTK theme or custom stylesheet.
-
-## Safety
-Make a backup before editing your desktop configuration. Test manually before adding any component to autostart.
+Blur/glow are decorative. Disable them on low-power GPUs and preserve readable focus borders.

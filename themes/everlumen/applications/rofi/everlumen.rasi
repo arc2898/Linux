@@ -1,43 +1,22 @@
 * {
-  bg: #0b1020ee;
-  surface: #151c2e;
-  text: #e8f4f4;
-  muted: #9aabc1;
-  mint: #8fffd8;
-  lilac: #c6a7ff;
-  petal: #ffb6d9;
+  bg: #080811f2;
+  surface: #111321;
+  raised: #1a2033;
+  text: #ecfaff;
+  muted: #8ea3bc;
+  cyan: #3bf7ee;
+  acid: #c6ff3b;
+  pink: #ff42d0;
+  violet: #9870ff;
   background-color: transparent;
   text-color: @text;
-  font: "Inter 11";
+  font: "JetBrains Mono 10";
 }
-window {
-  width: 42%;
-  border: 1px;
-  border-color: @mint;
-  border-radius: 24px;
-  background-color: @bg;
-  padding: 20px;
-}
+window { width: 44%; border: 1px; border-color: @cyan; border-radius: 22px; background-color: @bg; padding: 20px; }
 mainbox { background-color: transparent; spacing: 12px; }
-inputbar {
-  background-color: @surface;
-  border: 1px;
-  border-color: #33455668;
-  border-radius: 14px;
-  padding: 12px;
-  children: [prompt, entry];
-}
-prompt { text-color: @mint; padding: 0 8px 0 0; }
-entry { placeholder: "Search the garden…"; }
-listview { lines: 7; spacing: 6px; background-color: transparent; }
-element {
-  padding: 10px 12px;
-  border-radius: 12px;
-  background-color: transparent;
-}
-element selected {
-  background-color: #338fffd8;
-  text-color: @text;
-  border: 1px;
-  border-color: @mint;
-}
+inputbar { background-color: @surface; border: 1px; border-color: #33435b; border-radius: 13px; padding: 12px; children: [prompt, entry]; }
+prompt { text-color: @acid; padding: 0 8px 0 0; }
+entry { placeholder: "Search the signal garden..."; }
+listview { lines: 8; spacing: 6px; background-color: transparent; }
+element { padding: 10px 12px; border-radius: 11px; background-color: transparent; }
+element selected { background-color: #263bf7ee; text-color: @text; border: 1px; border-color: @acid; }
