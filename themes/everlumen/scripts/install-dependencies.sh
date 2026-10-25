@@ -5,7 +5,7 @@ PATH="$HOME/.local/bin:$HOME/.nix-profile/bin:/run/current-system/sw/bin:$PATH";
 YES=0; EXTRAS=0; INSTALL_HYPRLAND=0; APT_UPDATED=0
 for arg in "$@"; do case "$arg" in --yes|-y) YES=1;; --extras) EXTRAS=1;; --install-hyprland) INSTALL_HYPRLAND=1;; --help) echo 'Usage: install-dependencies.sh [--yes] [--extras] [--install-hyprland]'; exit 0;; *) echo "Unknown option: $arg" >&2; exit 2;; esac; done
 [ -r /etc/os-release ] && . /etc/os-release || true
-ID=${ID:-unknown}; ID_LIKE=${ID_LIKE:-}
+ID=\${ID:-unknown}; ID_LIKE=\${ID_LIKE:-}
 case " $ID $ID_LIKE " in
  *" arch "*) PM=pacman; UPM_MANAGER=pacman; FAMILY=Arch;;
  *" debian "*|*" ubuntu "*) PM=apt; UPM_MANAGER=apt; FAMILY=Debian/Ubuntu;;
@@ -20,13 +20,17 @@ case " $ID $ID_LIKE " in
 esac
 echo "EVERLUMEN dependency route: $ID / $FAMILY / $PM"
 if [ "$YES" -eq 0 ]; then printf 'This may install packages. Hyprland itself is only attempted if --install-hyprland was provided. Continue? [y/N] '; read answer || answer=; case "$answer" in y|Y|yes|YES) :;; *) echo Cancelled; exit 0;; esac; fi
-ROOT=${EVERLUMEN_SOURCE_DIR:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}
+ROOT=\${EVERLUMEN_SOURCE_DIR:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}
 UPM=$(command -v upm 2>/dev/null || true); [ -n "$UPM" ] || [ ! -x "$HOME/.local/bin/upm" ] || UPM="$HOME/.local/bin/upm"
 runroot(){ if [ "$(id -u)" -eq 0 ]; then "$@"; elif command -v sudo >/dev/null 2>&1; then sudo "$@"; else echo 'Missing sudo/root; skipping system install.' >&2; return 1; fi; }
 available(){
  pkg=$1
  case "$PM" in
-  apt) apt-cache show "$pkg" >/dev/null 2>&1;;
+  apt)
+    # Refresh once before checking the configured apt sources; otherwise stale or absent
+    # package lists can incorrectly force the fallback path even for installable packages.
+    if [ "$APT_UPDATED" -eq 0 ]; then runroot apt-get update || return 1; APT_UPDATED=1; fi
+    apt-cache show "$pkg" 2>/dev/null | grep -q "^Package: $pkg$";;
   dnf) dnf -q list --available "$pkg" >/dev/null 2>&1;;
   pacman) pacman -Si "$pkg" >/dev/null 2>&1;;
   zypper) zypper -n info "$pkg" >/dev/null 2>&1;;
@@ -41,7 +45,7 @@ available(){
 native_install(){
  pkg=$1
  case "$PM" in
-  apt) if [ "$APT_UPDATED" -eq 0 ]; then runroot apt-get update || return 1; APT_UPDATED=1; fi; runroot apt-get install -y "$pkg";;
+  apt) runroot apt-get install -y "$pkg";;
   dnf) runroot dnf install -y "$pkg";;
   pacman) runroot pacman -Syu --needed --noconfirm "$pkg";;
   zypper) runroot zypper --non-interactive install "$pkg";;
