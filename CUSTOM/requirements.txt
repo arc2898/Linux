@@ -1,0 +1,2 @@
+# Optional polished terminal UI; standard-library fallback is available.
+rich>=13.7,<15
