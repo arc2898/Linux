@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 WORK=${CUSTOM_BUILD_DIR:-"$ROOT/.build"}
 DIST="$ROOT/dist"
 ARCH=${ARCH:-amd64}
