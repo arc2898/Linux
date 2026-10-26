@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.venv/
+custom-profile.json
+custom-profile.plan.json
+*.iso
+build/
+dist/
