@@ -17,10 +17,10 @@ Build a Debian-based, text-mode network installer ISO targeting **under 100 MB**
 
 ## Build locally
 
-On Debian/Ubuntu, install `curl xorriso gzip cpio file python3 shellcheck` and run:
+On Debian/Ubuntu, install `curl xorriso gzip cpio file python3 shellcheck` and run the build as root (initramfs extraction preserves device entries):
 
 ```sh
-sh custom-os/scripts/build-iso.sh
+sudo sudo sh custom-os/scripts/build-iso.sh
 ```
 
 The script downloads the official Debian stable amd64 netboot mini ISO, injects the TUI and preseed hook, preserves the original boot catalog, and writes `dist/custom-os-amd64.iso`. Override `DEBIAN_SUITE` or `ARCH` only if the matching official Debian installer path exists.
