@@ -2,6 +2,7 @@
 # Runs from the Debian Installer initramfs before its original /init.
 # This is a selection UI only; it never installs packages or runs GitHub code.
 set -u
+set -f
 
 exec </dev/console >/dev/console 2>&1 || exit 0
 
@@ -13,27 +14,26 @@ DISPLAY_MANAGER=none
 WINDOW_MANAGER=none
 LOGIN_SHELL=bash
 ICON_PACKAGE=default
-EXTRA_PACKAGES=""
 GITHUB_URL=""
 
 choose() {
     prompt=$1
     default=$2
     shift 2
-    printf '\n%s\n' "$prompt"
+    printf '\n%s\n' "$prompt" >&2
     for item in "$@"; do
         if [ "$item" = "$default" ]; then
-            printf '  * %s (default)\n' "$item"
+            printf '  * %s (default)\n' "$item" >&2
         else
-            printf '    %s\n' "$item"
+            printf '    %s\n' "$item" >&2
         fi
     done
-    printf '> '
+    printf '> ' >&2
     IFS= read -r answer || answer=""
     [ -n "$answer" ] || answer=$default
     case " $* " in
         *" $answer "*) printf '%s' "$answer" ;;
-        *) printf 'Invalid choice; using %s\n' "$default" >/dev/console; printf '%s' "$default" ;;
+        *) printf 'Invalid choice; using %s\n' "$default" >&2; printf '%s' "$default" ;;
     esac
 }
 
@@ -116,11 +116,12 @@ printf 'Optional GitHub repository URL to record (not executed): '
 IFS= read -r GITHUB_URL || GITHUB_URL=""
 case "$GITHUB_URL" in
     "") ;;
-    https://github.com/*/*) 
-        case "$GITHUB_URL" in *[!a-zA-Z0-9:/._-]*)
-            printf 'URL contains unsupported characters; URL not recorded.\n'
-            GITHUB_URL=""
-            ;;
+    https://github.com/*/*)
+        case "$GITHUB_URL" in
+            *[!a-zA-Z0-9:/._-]*)
+                printf 'URL contains unsupported characters; URL not recorded.\n'
+                GITHUB_URL=""
+                ;;
         esac
         ;;
     *)
@@ -129,7 +130,6 @@ case "$GITHUB_URL" in
         ;;
 esac
 
-# Keep a simple shell-readable manifest, with all values restricted above.
 cat > "$PROFILE" <<EOF
 CUSTOM_NAME=custom
 CUSTOM_BASE=debian
@@ -145,8 +145,6 @@ CUSTOM_GITHUB_COMPONENT_URL=$GITHUB_URL
 CUSTOM_BOOTLOADER=grub
 EOF
 
-# Debian Installer reads this file via preseed/file= on the kernel command line.
-# These are package names only; no shell commands are derived from repository data.
 cat > "$PRESEED" <<EOF
 d-i pkgsel/upgrade select none
 d-i pkgsel/include string $PACKAGES
