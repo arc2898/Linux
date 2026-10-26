@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 sh -n "$ROOT/installer/custom-tui.sh"
 sh -n "$ROOT/scripts/build-iso.sh"
 grep -q 'exec /init.custom-original' "$ROOT/scripts/build-iso.sh"
