@@ -108,6 +108,7 @@ fi
 printf 'Extra Debian package names (comma or space separated; blank for none): '
 IFS= read -r EXTRA_RAW || EXTRA_RAW=""
 EXTRA_RAW=$(printf '%s' "$EXTRA_RAW" | tr ',' ' ')
+ # shellcheck disable=SC2086 # Intentional splitting into individual package names after globbing is disabled.
 for package in $EXTRA_RAW; do
     add_package "$package"
 done
