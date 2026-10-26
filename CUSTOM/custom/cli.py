@@ -6,6 +6,7 @@ from dataclasses import asdict
 from .profile import Profile, GitHubComponent
 from .planner import make_plan
 from .github_recipes import inspect_repo
+
 try:
     from rich.console import Console
     from rich.panel import Panel
@@ -21,29 +22,36 @@ def say(text=""):
     console.print(text) if RICH else print(text)
 
 def ask(label, default=""):
-    if RICH: return Prompt.ask(label, default=default)
+    if RICH:
+        return Prompt.ask(label, default=default)
     value = input(f"{label} [{default}]: ").strip()
     return value or default
 
 def choose(label, options, default):
     say(f"\n{label}")
-    for i, item in enumerate(options, 1): say(f"  {i}. {item}{' (default)' if item == default else ''}")
+    for i, item in enumerate(options, 1):
+        say(f"  {i}. {item}{' (default)' if item == default else ''}")
     raw = ask("Choose number or type value", str(options.index(default)+1))
-    if raw.isdigit() and 1 <= int(raw) <= len(options): return options[int(raw)-1]
-    if raw in options: return raw
+    if raw.isdigit() and 1 <= int(raw) <= len(options):
+        return options[int(raw)-1]
+    if raw in options:
+        return raw
     say("Unrecognized choice; keeping default.")
     return default
 
 def confirm(label, default=False):
-    if RICH: return Confirm.ask(label, default=default)
+    if RICH:
+        return Confirm.ask(label, default=default)
     suffix = "Y/n" if default else "y/N"
     answer = input(f"{label} [{suffix}]: ").strip().lower()
     return answer in {"y","yes"} if answer else default
 
 def interactive():
     profile = Profile()
-    if RICH: console.print(Panel.fit("[bold cyan]CUSTOM Linux[/bold cyan]\nYour system. Your components. Your choice.\n[dim]Network installer prototype · No disk changes in this version[/dim]", border_style="cyan"))
-    else: say("="*54+"\n CUSTOM Linux — configurable network installer\n This prototype will not modify disks.\n"+"="*54)
+    if RICH:
+        console.print(Panel.fit("[bold cyan]CUSTOM Linux[/bold cyan]\nYour system. Your components. Your choice.\n[dim]Network installer prototype · No disk changes in this version[/dim]", border_style="cyan"))
+    else:
+        say("="*54+"\n CUSTOM Linux — configurable network installer\n This prototype will not modify disks.\n"+"="*54)
     profile.name = ask("System name", profile.name)
     profile.base = choose("Base system", ["debian"], "debian")
     profile.release = choose("Debian release", ["stable","testing","unstable","bookworm","trixie"], "stable")
@@ -56,7 +64,8 @@ def interactive():
     profile.icon_pack = ask("Icon pack (package/theme name)", "default")
     profile.shell = choose("Login shell", ["bash","zsh","fish","nushell"], "bash")
     raw_packages = ask("Extra Debian package names (comma-separated; blank for defaults)", "")
-    if raw_packages: profile.packages.extend(p.strip() for p in raw_packages.split(",") if p.strip())
+    if raw_packages:
+        profile.packages.extend(p.strip() for p in raw_packages.split(",") if p.strip())
     profile.username = ask("Initial username (optional for plan)", "")
     repo_url = ask("GitHub component repository URL (optional)", "")
     if repo_url:
@@ -65,21 +74,26 @@ def interactive():
             say(f"Found {metadata['full_name']}: {metadata['description']}")
             say(f"Branch: {metadata['default_branch']} · License: {metadata['license']} · Stars: {metadata['stars']}")
             say(metadata["warning"])
-            if confirm("Add repository metadata as an unexecuted component?", True): profile.github_components.append(GitHubComponent(url=metadata["html_url"], ref=metadata["default_branch"]))
-        except Exception as exc: say(f"GitHub inspection failed: {exc}")
+            if confirm("Add repository metadata as an unexecuted component?", True):
+                profile.github_components.append(GitHubComponent(url=metadata["html_url"], ref=metadata["default_branch"]))
+        except Exception as exc:
+            say(f"GitHub inspection failed: {exc}")
     errors = profile.validate()
     if errors:
         say("\nValidation errors:")
-        for error in errors: say(f"  - {error}")
+        for error in errors:
+            say(f"  - {error}")
         return 2
     plan = make_plan(profile)
     say("\nSelected configuration:")
     if RICH:
         table = Table("Setting","Value")
-        for key, value in asdict(profile).items(): table.add_row(key, json.dumps(value, ensure_ascii=False) if isinstance(value,(list,dict)) else str(value))
+        for key, value in asdict(profile).items():
+            table.add_row(key, json.dumps(value, ensure_ascii=False) if isinstance(value,(list,dict)) else str(value))
         console.print(table)
     else:
-        for key, value in asdict(profile).items(): say(f"  {key}: {value}")
+        for key, value in asdict(profile).items():
+            say(f"  {key}: {value}")
     output = ask("Save profile path", "custom-profile.json")
     profile.save(output)
     plan_path = str(Path(output).with_suffix(".plan.json"))
@@ -97,15 +111,25 @@ def main(argv=None):
     if args.inspect_github:
         try:
             url = args.inspect_github if args.inspect_github.startswith("https://") else f"https://github.com/{args.inspect_github}"
-            print(json.dumps(inspect_repo(url), indent=2)); return 0
-        except Exception as exc: print(f"error: {exc}", file=sys.stderr); return 2
-    try: profile = Profile.load(args.profile) if args.profile else Profile()
-    except Exception as exc: print(f"error loading profile: {exc}", file=sys.stderr); return 2
+            print(json.dumps(inspect_repo(url), indent=2))
+            return 0
+        except Exception as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+    try:
+        profile = Profile.load(args.profile) if args.profile else Profile()
+    except Exception as exc:
+        print(f"error loading profile: {exc}", file=sys.stderr)
+        return 2
     if args.validate:
         errors = profile.validate()
-        if errors: print("\n".join(f"ERROR: {x}" for x in errors), file=sys.stderr); return 2
-        print("Profile valid."); return 0
+        if errors:
+            print("\n".join(f"ERROR: {x}" for x in errors), file=sys.stderr)
+            return 2
+        print("Profile valid.")
+        return 0
     if args.plan:
         Path(args.plan).write_text(json.dumps(make_plan(profile), indent=2)+"\n", encoding="utf-8")
-        print(f"Wrote {args.plan} (plan only; no disk modifications)."); return 0
+        print(f"Wrote {args.plan} (plan only; no disk modifications).")
+        return 0
     return interactive()
