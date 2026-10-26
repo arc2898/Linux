@@ -20,16 +20,16 @@ Build a Debian-based, text-mode network installer ISO targeting **under 100 MB**
 On Debian/Ubuntu, install `curl xorriso gzip cpio file python3 shellcheck` and run the build as root (initramfs extraction preserves device entries):
 
 ```sh
-sudo sudo sh custom-os/scripts/build-iso.sh
+sudo sh custom-os/scripts/build-iso.sh
 ```
 
-The script downloads the official Debian stable amd64 netboot mini ISO, injects the TUI and preseed hook, preserves the original boot catalog, and writes `dist/custom-os-amd64.iso`. Override `DEBIAN_SUITE` or `ARCH` only if the matching official Debian installer path exists.
+The script downloads the official Debian stable amd64 netboot mini ISO, injects the TUI and preseed hook, preserves the original boot catalog, and writes `custom-os/dist/custom-os-amd64.iso`. Override `DEBIAN_SUITE` or `ARCH` only if the matching official Debian installer path exists.
 
 ## Verify
 
 ```sh
 sh custom-os/tests/test-installer.sh
-sh custom-os/scripts/build-iso.sh
+sudo sh custom-os/scripts/build-iso.sh
 ```
 
 The GitHub Actions workflow runs tests, builds the ISO, checks its size and El Torito boot metadata, and uploads it as an artifact. The artifact is only considered complete if the workflow passes.
