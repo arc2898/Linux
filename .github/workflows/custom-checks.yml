@@ -19,5 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Run profile unit tests
+        working-directory: CUSTOM
+        run: python -m unittest discover -s tests -v
       - name: Validate default profile and generate plan
         run: sh CUSTOM/scripts/check.sh
