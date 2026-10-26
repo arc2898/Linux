@@ -1,0 +1,87 @@
+name: CUSTOM OS ISO
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "custom-os/**"
+      - ".github/workflows/custom-os-iso.yml"
+  push:
+    branches: [main, custom-os-network-iso]
+    paths:
+      - "custom-os/**"
+      - ".github/workflows/custom-os-iso.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: custom-os-iso-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-tests:
+    name: TUI and build-script checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: Check shell syntax
+        run: |
+          sh -n custom-os/installer/custom-tui.sh
+          sh -n custom-os/scripts/build-iso.sh
+          sh -n custom-os/tests/test-installer.sh
+          sh -n custom-os/tests/qemu-smoke.sh
+      - name: Run static tests
+        run: sh custom-os/tests/test-installer.sh
+      - name: ShellCheck
+        run: shellcheck -s sh custom-os/installer/custom-tui.sh custom-os/scripts/build-iso.sh custom-os/tests/test-installer.sh custom-os/tests/qemu-smoke.sh
+
+  build-iso:
+    name: Build and verify network installer ISO
+    runs-on: ubuntu-latest
+    needs: static-tests
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ISO and VM tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl xorriso gzip cpio file qemu-system-x86 coreutils
+      - name: Build ISO
+        run: sudo sh custom-os/scripts/build-iso.sh
+      - name: Smoke-test CUSTOM TUI in QEMU
+        run: sudo sh custom-os/tests/qemu-smoke.sh
+      - name: Report artifact size
+        run: |
+          bytes=$(cat custom-os/dist/custom-os-amd64.iso.bytes)
+          mib=$(awk -v b="$bytes" 'BEGIN { printf "%.2f", b/1048576 }')
+          echo "CUSTOM_ISO_BYTES=$bytes" >> "$GITHUB_ENV"
+          echo "CUSTOM_ISO_MIB=$mib" >> "$GITHUB_ENV"
+          test "$bytes" -lt 104857600
+          file custom-os/dist/custom-os-amd64.iso
+          xorriso -indev custom-os/dist/custom-os-amd64.iso -report_el_torito plain
+      - name: Upload bootable ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-os-network-installer-amd64
+          path: |
+            custom-os/dist/custom-os-amd64.iso
+            custom-os/dist/custom-os-amd64.iso.bytes
+          if-no-files-found: error
+          retention-days: 14
+      - name: Build summary
+        if: always()
+        run: |
+          {
+            echo "## CUSTOM OS ISO build"
+            echo ""
+            echo "- Target: under 100 MiB"
+            echo "- Size in bytes: ${CUSTOM_ISO_BYTES:-not measured}"
+            echo "- Size in MiB: ${CUSTOM_ISO_MIB:-not measured}"
+            echo "- Artifact: custom-os-network-installer-amd64 (available only if upload step passed)"
+          } >> "$GITHUB_STEP_SUMMARY"
