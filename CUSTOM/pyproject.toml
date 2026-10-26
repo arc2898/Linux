@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "custom-linux-builder"
+version = "0.1.0"
+description = "A profile-driven terminal Linux system builder and network installer"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+tui = ["rich>=13.7,<15"]
+
+[tool.setuptools]
+packages = ["custom"]

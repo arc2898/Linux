@@ -1,0 +1,26 @@
+name: CUSTOM checks
+
+on:
+  push:
+    paths:
+      - "CUSTOM/**"
+      - ".github/workflows/custom-checks.yml"
+  pull_request:
+    paths:
+      - "CUSTOM/**"
+      - ".github/workflows/custom-checks.yml"
+  workflow_dispatch:
+
+jobs:
+  profile-and-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run profile unit tests
+        working-directory: CUSTOM
+        run: python -m unittest discover -s tests -v
+      - name: Validate default profile and generate plan
+        run: sh CUSTOM/scripts/check.sh
