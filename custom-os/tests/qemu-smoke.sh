@@ -2,7 +2,7 @@
 # Boot the patched Debian kernel/initrd in QEMU with a serial console, answer
 # the CUSTOM prompts, and assert that the TUI completed before D-I continues.
 set -eu
-ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 WORK=${CUSTOM_BUILD_DIR:-"$ROOT/.build"}
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing command: $1" >&2; exit 2; }; }
 need qemu-system-x86_64
