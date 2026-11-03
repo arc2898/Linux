@@ -51,7 +51,7 @@ jobs:
       - name: Install ISO and VM tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl xorriso gzip cpio file qemu-system-x86 coreutils
+          sudo apt-get install -y curl xorriso gzip cpio file qemu-system-x86 coreutils shellcheck
       - name: Build ISO
         run: sudo sh custom-os/scripts/build-iso.sh
       - name: Smoke-test CUSTOM TUI in QEMU
