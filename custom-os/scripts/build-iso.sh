@@ -65,15 +65,19 @@ while IFS= read -r cfg; do
    ;;
  esac
 done
-for cfg in "$ISO_ROOT/isolinux/txt.cfg" "$ISO_ROOT/boot/grub/grub.cfg"; do
- [ -f "$cfg" ] || die "missing boot menu $cfg"
- grep -q 'preseed/file=/preseed/custom.cfg' "$cfg" || die "preseed argument absent from $cfg"
-done
+# Debian mini.iso uses the Syslinux menu under the installer tree (not
+# necessarily /isolinux/txt.cfg). Discover the actual boot menu files.
+BIOS_CFG=$(find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -l 'menu label.*Install\|label install\|default install' {} \; | head -n 1)
+UEFI_CFG=$(find "$ISO_ROOT" -type f -path '*/grub/grub.cfg' -print | head -n 1)
+[ -n "$BIOS_CFG" ] || die "could not discover Debian BIOS Syslinux menu"
+[ -n "$UEFI_CFG" ] || die "could not discover Debian UEFI GRUB menu"
+grep -q 'preseed/file=/preseed/custom.cfg' "$BIOS_CFG" || die "preseed argument absent from BIOS menu $BIOS_CFG"
+grep -q 'preseed/file=/preseed/custom.cfg' "$UEFI_CFG" || die "preseed argument absent from UEFI menu $UEFI_CFG"
 [ -s "$ISO_ROOT/preseed/custom.cfg" ] || die "preseed payload missing"
 set --
-for path in "$INITRD_REL" preseed/custom.cfg boot/grub/grub.cfg isolinux/txt.cfg isolinux/menu.cfg isolinux/isolinux.cfg isolinux/syslinux.cfg; do
- candidate="$ISO_ROOT/$path"
- [ ! -f "$candidate" ] || set -- "$@" -map "$candidate" "/$path"
+# Include every discovered/edited boot config, regardless of its upstream path.
+for candidate in "$ISO_ROOT/$INITRD_REL" "$ISO_ROOT/preseed/custom.cfg" "$BIOS_CFG" "$UEFI_CFG"; do
+ [ ! -f "$candidate" ] || set -- "$@" -map "$candidate" "/${candidate#"$ISO_ROOT"/}"
 done
 xorriso -indev "$SOURCE_ISO" -outdev "$OUTPUT" -boot_image any replay "$@" -commit >/dev/null 2>&1 || die "xorriso ISO rebuild failed"
 [ -s "$OUTPUT" ] || die "ISO output empty"
