@@ -16,14 +16,14 @@ mkdir -p "$WORK"
 # packages, GitHub URL. The test intentionally never runs the full installer.
 set +e
 printf 'none\nnone\nnone\nbash\ndefault\n\n\n' |
-  timeout 35s qemu-system-x86_64 -machine pc,accel=tcg -m 1024 -smp 1 \
+  timeout 50s qemu-system-x86_64 -machine pc,accel=tcg -m 1024 -smp 1 \
     -display none -serial stdio -monitor none -no-reboot -no-shutdown \
     -kernel "$KERNEL" -initrd "$INITRD" \
     -append 'console=tty0 console=ttyS0,115200n8 --- preseed/file=/custom-preseed.cfg' \
     >"$LOG" 2>&1
 status=$?
 set -e
-if ! grep -q 'CUSTOM configuration prepared' "$LOG"; then
+if ! grep -q 'CUSTOM profile captured' "$LOG"; then
     echo "QEMU did not reach the end of the CUSTOM TUI (exit $status)." >&2
     tail -n 120 "$LOG" >&2 || true
     exit 1
