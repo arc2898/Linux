@@ -33,3 +33,8 @@ sh custom-os/tests/test-installer.sh
 ```
 
 The build checks ISO readability, El Torito boot metadata, BIOS and UEFI menu preseed arguments, and the under-100-MiB target. A full target-disk install remains a separate VM test.
+
+
+## Universal Package Manager integration status
+
+The linked Universal Package Manager (UPM) is written in Go and currently exposes a CLI that operates on the running host. It has package adapters for APT, Pacman, DNF, Zypper, XBPS and Portage. It does not yet provide a target-root/offline-root installation API. For this Debian installer prototype the selected package list is installed into the Debian target by APT during Debian Installer late_command; calling UPM inside the initramfs would target the installer environment, not the target installation. Full UPM integration and non-Debian base installers remain roadmap work.
