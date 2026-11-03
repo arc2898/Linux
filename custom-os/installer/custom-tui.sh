@@ -1,5 +1,5 @@
 #!/bin/sh
-# Runs from Debian Installer initramfs before its original /init.
+# CUSTOM selection UI runs from the Debian Installer initramfs.
 set -u
 set -f
 exec </dev/console >/dev/console 2>&1 || exit 0
@@ -34,20 +34,13 @@ add_package() {
 printf '\nCUSTOM OS — installer configuration\n'
 printf 'Base: Debian stable | bootloader: GRUB\n'
 DESKTOP=$(choose "Desktop environment" none none xfce kde-plasma gnome mate cinnamon lxqt)
-case "$DESKTOP" in
- xfce) add_package task-xfce-desktop;;
- kde-plasma) add_package task-kde-desktop;;
- gnome) add_package task-gnome-desktop;;
- mate) add_package task-mate-desktop;;
- cinnamon) add_package task-cinnamon-desktop;;
- lxqt) add_package task-lxqt-desktop;;
-esac
+case "$DESKTOP" in xfce) add_package task-xfce-desktop;; kde-plasma) add_package task-kde-desktop;; gnome) add_package task-gnome-desktop;; mate) add_package task-mate-desktop;; cinnamon) add_package task-cinnamon-desktop;; lxqt) add_package task-lxqt-desktop;; esac
 DEFAULT_DM=lightdm
 [ "$DESKTOP" = kde-plasma ] && DEFAULT_DM=sddm
 [ "$DESKTOP" = gnome ] && DEFAULT_DM=gdm3
 DISPLAY_MANAGER=$(choose "Display manager" "$DEFAULT_DM" none lightdm sddm gdm3)
 case "$DISPLAY_MANAGER" in lightdm|sddm|gdm3) add_package "$DISPLAY_MANAGER";; esac
-WINDOW_MANAGER=$(choose "Additional window manager" none none i3 openbox bspwm awesome)
+WINDOW_MANAGER=$(choose "Window manager" none none i3 openbox bspwm awesome)
 case "$WINDOW_MANAGER" in i3) add_package i3-wm;; openbox) add_package openbox;; bspwm) add_package bspwm;; awesome) add_package awesome;; esac
 LOGIN_SHELL=$(choose "Login shell" bash bash zsh fish)
 case "$LOGIN_SHELL" in zsh|fish) add_package "$LOGIN_SHELL";; esac
@@ -75,5 +68,9 @@ CUSTOM_GITHUB_COMPONENT_URL=$GITHUB_URL
 CUSTOM_BOOTLOADER=grub
 EOF
 printf '%s\n' "$PACKAGES" | tr ' ' '\n' | sed '/^$/d' > "$PACKAGE_FILE"
-printf '\nCUSTOM profile captured. Debian Installer will continue.\n'
+# Debian Installer reads this persistent ramdisk path as part of late_command.
+mkdir -p /var/lib/custom
+cp "$PROFILE" /var/lib/custom/profile.env
+cp "$PACKAGE_FILE" /var/lib/custom/packages.txt
+printf '\nCUSTOM profile captured. Continuing to Debian Installer.\n'
 exit 0
