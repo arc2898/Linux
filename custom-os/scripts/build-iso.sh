@@ -1,12 +1,11 @@
 #!/bin/sh
 set -eu
-
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 WORK=${CUSTOM_BUILD_DIR:-"$ROOT/.build"}
 DIST="$ROOT/dist"
 ARCH=${ARCH:-amd64}
-DEBIAN_SUITE=${DEBIAN_SUITE:-stable}
-BASE_URL="https://deb.debian.org/debian/dists/$DEBIAN_SUITE/main/installer-$ARCH/current/images/netboot"
+SUITE=${DEBIAN_SUITE:-stable}
+BASE_URL="https://deb.debian.org/debian/dists/$SUITE/main/installer-$ARCH/current/images/netboot"
 SOURCE_ISO="$WORK/debian-mini.iso"
 ISO_ROOT="$WORK/iso-root"
 INITRD_TREE="$WORK/initrd-tree"
@@ -14,96 +13,85 @@ PATCHED_INITRD="$WORK/initrd-patched.gz"
 OUTPUT="$DIST/custom-os-$ARCH.iso"
 
 die() { printf 'CUSTOM ISO build error: %s\n' "$*" >&2; exit 1; }
-need() { command -v "$1" >/dev/null 2>&1 || die "required command not found: $1"; }
-
-for cmd in curl xorriso gzip cpio find sed awk grep mktemp wc tr; do need "$cmd"; done
-[ "$ARCH" = amd64 ] || die "this ISO prototype currently supports amd64 only"
-[ -f "$ROOT/installer/custom-tui.sh" ] || die "missing installer/custom-tui.sh"
+need() { command -v "$1" >/dev/null 2>&1 || die "required command missing: $1"; }
+for cmd in curl xorriso gzip cpio find sed grep wc tr sha256sum; do need "$cmd"; done
+[ "$ARCH" = amd64 ] || die "only amd64 is currently supported"
+[ -f "$ROOT/installer/custom-tui.sh" ] || die "missing CUSTOM TUI"
 
 mkdir -p "$WORK" "$DIST"
 rm -rf "$ISO_ROOT" "$INITRD_TREE" "$PATCHED_INITRD"
 mkdir -p "$ISO_ROOT" "$INITRD_TREE"
-
-printf 'Downloading official Debian %s %s mini ISO...\n' "$DEBIAN_SUITE" "$ARCH"
-curl --fail --location --retry 4 --retry-delay 2 --connect-timeout 20 \
-    --output "$SOURCE_ISO" "$BASE_URL/mini.iso" || die "download failed: $BASE_URL/mini.iso"
-
-printf 'Inspecting source image...\n'
-xorriso -indev "$SOURCE_ISO" -toc >/dev/null 2>&1 || die "downloaded file is not a readable ISO"
-xorriso -osirrox on -indev "$SOURCE_ISO" -extract / "$ISO_ROOT" >/dev/null 2>&1 || die "could not extract source ISO"
+curl --fail --location --retry 4 --retry-delay 2 --connect-timeout 20 --output "$SOURCE_ISO" "$BASE_URL/mini.iso" || die "Debian mini ISO download failed"
+xorriso -indev "$SOURCE_ISO" -toc >/dev/null 2>&1 || die "source ISO is invalid"
+xorriso -osirrox on -indev "$SOURCE_ISO" -extract / "$ISO_ROOT" >/dev/null 2>&1 || die "source ISO extraction failed"
 
 INITRD_PATH=$(find "$ISO_ROOT" -type f -name initrd.gz -print | head -n 1)
-[ -n "$INITRD_PATH" ] || die "could not locate initrd.gz in Debian mini ISO"
+[ -n "$INITRD_PATH" ] || die "initrd.gz not found"
 INITRD_REL=${INITRD_PATH#"$ISO_ROOT"/}
-[ -f "$INITRD_PATH" ] || die "initrd is missing"
-
-printf 'Patching initramfs at /%s...\n' "$INITRD_REL"
-gzip -t "$INITRD_PATH" || die "initrd gzip integrity check failed"
+gzip -t "$INITRD_PATH" || die "source initrd gzip check failed"
 (
-    cd "$INITRD_TREE"
-    gzip -dc "$INITRD_PATH" | cpio --extract --make-directories --no-absolute-filenames --quiet
-) || die "could not unpack Debian Installer initramfs"
-
-[ -e "$INITRD_TREE/init" ] || die "initramfs has no /init entry point"
-[ -x "$INITRD_TREE/bin/sh" ] || die "initramfs has no /bin/sh"
+ cd "$INITRD_TREE"
+ gzip -dc "$INITRD_PATH" | cpio --extract --make-directories --no-absolute-filenames --quiet
+) || die "initramfs extraction failed"
+[ -e "$INITRD_TREE/init" ] || die "initramfs /init missing"
 cp "$ROOT/installer/custom-tui.sh" "$INITRD_TREE/custom-tui.sh"
 chmod 0755 "$INITRD_TREE/custom-tui.sh"
-[ ! -e "$INITRD_TREE/init.custom-original" ] || die "unexpected init.custom-original already exists"
 mv "$INITRD_TREE/init" "$INITRD_TREE/init.custom-original"
 cat > "$INITRD_TREE/init" <<'WRAPPER'
 #!/bin/sh
-# Run CUSTOM's selection UI, then resume Debian Installer's original init.
-if [ -x /bin/sh ] && [ -f /custom-tui.sh ]; then
-    /bin/sh /custom-tui.sh || true
-fi
+/bin/sh /custom-tui.sh || true
 exec /init.custom-original "$@"
 WRAPPER
 chmod 0755 "$INITRD_TREE/init"
-
 (
-    cd "$INITRD_TREE"
-    find . -print0 | cpio --null --create --format=newc --quiet --owner=0:0
+ cd "$INITRD_TREE"
+ find . -print0 | cpio --null --create --format=newc --quiet --owner=0:0
 ) | gzip -9n > "$PATCHED_INITRD"
-gzip -t "$PATCHED_INITRD" || die "patched initrd is corrupt"
+gzip -t "$PATCHED_INITRD" || die "new initrd gzip check failed"
 cp "$PATCHED_INITRD" "$INITRD_PATH"
 
-# Add the preseed reference to Debian Installer boot entries. The TUI writes
-# this file in the initramfs before the original Debian Installer init proceeds.
+# Preseed file lives on the ISO filesystem, not in the RAM initrd.
+mkdir -p "$ISO_ROOT/preseed"
+cat > "$ISO_ROOT/preseed/custom.cfg" <<'PRESEED'
+d-i debconf/priority string critical
+d-i auto-install/enable boolean true
+d-i pkgsel/upgrade select none
+d-i pkgsel/include string ca-certificates sudo
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/with_other_os boolean true
+d-i preseed/late_command string mkdir -p /target/etc/custom; cp /tmp/custom-profile.env /target/etc/custom/profile.env; cp /tmp/custom-packages /target/etc/custom/packages.txt; in-target /bin/sh -c 'apt-get update && xargs -r apt-get install -y < /etc/custom/packages.txt'
+PRESEED
+
+# Patch every boot config; make sure the two primary menu files have the arg.
 find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -print |
 while IFS= read -r cfg; do
-    case "$cfg" in
-        */grub.cfg|*/txt.cfg|*/menu.cfg|*/isolinux.cfg|*/syslinux.cfg)
-            if grep -q -- '---' "$cfg"; then
-                sed 's/---/--- preseed\/file=\/custom-preseed.cfg/g' "$cfg" > "$cfg.tmp"
-                mv "$cfg.tmp" "$cfg"
-            fi
-            ;;
-    esac
+ case "$cfg" in
+  */grub.cfg|*/txt.cfg|*/menu.cfg|*/isolinux.cfg|*/syslinux.cfg)
+   if grep -q -- '---' "$cfg" && ! grep -q 'preseed/file=/preseed/custom.cfg' "$cfg"; then
+    sed 's#---#--- preseed/file=/preseed/custom.cfg#g' "$cfg" > "$cfg.tmp"
+    mv "$cfg.tmp" "$cfg"
+   fi
+   ;;
+ esac
 done
-
-for cfg in "$ISO_ROOT/boot/grub/grub.cfg" "$ISO_ROOT/isolinux/txt.cfg" "$ISO_ROOT/isolinux/menu.cfg"; do
-    if [ -f "$cfg" ]; then
-        sed 's/Debian GNU\/Linux Installer/CUSTOM OS Network Installer/g; s/Debian Installer menu/CUSTOM OS Installer/g' "$cfg" > "$cfg.tmp"
-        mv "$cfg.tmp" "$cfg"
-    fi
+for cfg in "$ISO_ROOT/isolinux/txt.cfg" "$ISO_ROOT/boot/grub/grub.cfg"; do
+ [ -f "$cfg" ] || die "expected boot config missing: $cfg"
+ grep -q 'preseed/file=/preseed/custom.cfg' "$cfg" || die "preseed kernel argument missing in $cfg"
 done
+# Confirm preseed file exists in the image tree.
+[ -s "$ISO_ROOT/preseed/custom.cfg" ] || die "custom preseed file missing"
 
-printf 'Rebuilding ISO while replaying original BIOS/UEFI boot metadata...\n'
 set --
-for path in "$INITRD_REL" boot/grub/grub.cfg isolinux/txt.cfg isolinux/menu.cfg isolinux/isolinux.cfg isolinux/syslinux.cfg; do
-    candidate="$ISO_ROOT/$path"
-    if [ -f "$candidate" ]; then
-        set -- "$@" -map "$candidate" "/$path"
-    fi
+for path in "$INITRD_REL" preseed/custom.cfg boot/grub/grub.cfg isolinux/txt.cfg isolinux/menu.cfg isolinux/isolinux.cfg isolinux/syslinux.cfg; do
+ candidate="$ISO_ROOT/$path"
+ [ ! -f "$candidate" ] || set -- "$@" -map "$candidate" "/$path"
 done
-xorriso -indev "$SOURCE_ISO" -outdev "$OUTPUT" -boot_image any replay "$@" -commit >/dev/null 2>&1 || die "xorriso failed to replay boot metadata and write ISO"
-
-[ -s "$OUTPUT" ] || die "ISO output is empty"
+xorriso -indev "$SOURCE_ISO" -outdev "$OUTPUT" -boot_image any replay "$@" -commit >/dev/null 2>&1 || die "xorriso ISO rebuild failed"
+[ -s "$OUTPUT" ] || die "ISO output empty"
 BYTES=$(wc -c < "$OUTPUT" | tr -d ' ')
-MIB=$(( (BYTES + 1048575) / 1048576 ))
-printf 'ISO path: %s\nSize: %s bytes (%s MiB)\n' "$OUTPUT" "$BYTES" "$MIB"
-[ "$BYTES" -lt 104857600 ] || die "ISO is not under 100 MiB (threshold: 104857600 bytes)"
-xorriso -indev "$OUTPUT" -toc >/dev/null 2>&1 || die "built ISO failed xorriso validation"
-xorriso -indev "$OUTPUT" -report_el_torito plain 2>&1 | grep -qi 'El Torito' || die "ISO does not report El Torito boot metadata"
+[ "$BYTES" -lt 104857600 ] || die "ISO exceeds 100 MiB"
+xorriso -indev "$OUTPUT" -toc >/dev/null 2>&1 || die "rebuilt ISO invalid"
+xorriso -indev "$OUTPUT" -report_el_torito plain 2>&1 | grep -qi 'El Torito' || die "El Torito boot catalogue missing"
 printf '%s\n' "$BYTES" > "$DIST/custom-os-$ARCH.iso.bytes"
-printf 'CUSTOM ISO build passed the size and boot-metadata checks.\n'
+sha256sum "$OUTPUT" > "$OUTPUT.sha256"
+printf 'CUSTOM ISO build passed; size %s bytes.\n' "$BYTES"
