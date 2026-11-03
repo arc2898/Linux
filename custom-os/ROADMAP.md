@@ -1,21 +1,30 @@
 # CUSTOM OS roadmap
 
-## First network installer
-- [x] Independent project directory
-- [x] Debian stable amd64 mini.iso build workflow
-- [x] TUI wrapper before Debian Installer
-- [x] Package/preseed profile selection for desktop, display manager, shell, window manager, icon package and extra packages
-- [x] Optional GitHub URL recorded as metadata only
-- [x] ISO size and El Torito metadata gates in CI
-- [ ] Successful hosted run and artifact inspection
-- [ ] End-to-end QEMU tests for BIOS and UEFI installation
-- [ ] Test that the Debian Installer honors dynamically generated preseed values
+## Boot and install
+- [x] Keep Debian mini ISO's BIOS ISOLINUX and UEFI GRUB mechanisms
+- [x] Patch both menu families to request the ISO-resident CUSTOM preseed
+- [x] Build-time assertions for both menu arguments
+- [ ] Boot actual ISO in QEMU BIOS and UEFI firmware
+- [ ] Verify preseed and profile/package handoff end-to-end
+- [ ] Complete installs to disposable BIOS and UEFI VM disks
 
-## Component safety and portability
-- [ ] Pinned GitHub recipe schema with checksum/commit and declared install method
-- [ ] Compatibility metadata per base, architecture, init system, display server and package ecosystem
-- [ ] Sandboxed build/validation of community recipes
-- [ ] Additional bases beyond Debian
-- [ ] Other bootloaders beyond GRUB, each with dedicated test coverage
+## UPM and base systems
+- [x] Inspect Universal Package Manager implementation and supported native adapters
+- [ ] Extend UPM with target-root/chroot installation API
+- [ ] Bundle a static UPM binary into initramfs/target installer
+- [ ] Debian bootstrap and APT integration
+- [ ] Arch bootstrap and Pacman integration
+- [ ] Fedora bootstrap and DNF integration
+- [ ] openSUSE bootstrap and Zypper integration
+- [ ] Void bootstrap and XBPS integration
+- [ ] Gentoo stage3/Portage integration
 
-A small network installer can stay below 100 MB by downloading the target packages during install. The ISO must still be tested on real and virtual hardware; static metadata checks are not a substitute for an end-to-end installation test.
+## Partitioning / multi-boot
+- [ ] Disk and firmware inventory
+- [ ] Manual partition editor and dry-run transaction view
+- [ ] Guided install-alongside mode
+- [ ] Safe EFI System Partition reuse
+- [ ] GRUB os-prober and Windows/Linux menu validation
+- [ ] End-to-end dual boot tests on disposable VM disks
+
+No destructive disk operations before the installer can show an exact transaction preview and pass VM tests.
