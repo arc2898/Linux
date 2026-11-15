@@ -7,7 +7,7 @@ ARCH=amd64
 SUITE=stable
 UPM_BINARY="$WORK/upm"
 UPM_COMMIT=$(cat "$WORK/upm-version")
-MAX_ISO_BYTES=157286400
+MAX_ISO_BYTES=262144000
 BASE_URL="https://deb.debian.org/debian/dists/$SUITE/main/installer-$ARCH/current/images/netboot"
 SOURCE_ISO="$WORK/debian-mini.iso"
 ISO_ROOT="$WORK/iso-root"
@@ -24,6 +24,10 @@ file "$UPM_BINARY" | grep -q 'ELF 64-bit' || die "UPM binary is not a 64-bit Lin
 [ -f "$ROOT/installer/custom-tui.sh" ] || die "missing CUSTOM TUI"
 [ -f "$ROOT/installer/custom-hardware-detect.sh" ] || die "missing hardware detector"
 [ -f "$ROOT/installer/custom-install-target.sh" ] || die "missing target installer helper"
+[ -f "$ROOT/installer/custom-apply-firmware.sh" ] || die "missing firmware staging helper"
+for package in firmware-iwlwifi firmware-realtek firmware-brcm80211 firmware-atheros firmware-mediatek; do
+    [ -d "$WORK/firmware-payload/$package" ] || die "missing staged firmware payload: $package"
+done
 mkdir -p "$WORK" "$DIST"
 rm -rf "$ISO_ROOT" "$VERIFY_ROOT" "$INITRD_TREE" "$PATCHED_INITRD"
 mkdir -p "$ISO_ROOT" "$VERIFY_ROOT" "$INITRD_TREE"
@@ -39,12 +43,23 @@ gzip -t "$INITRD_PATH" || die "source initrd gzip invalid"
 cp "$ROOT/installer/custom-tui.sh" "$INITRD_TREE/custom-tui.sh"
 cp "$ROOT/installer/custom-hardware-detect.sh" "$INITRD_TREE/custom-hardware-detect.sh"
 cp "$ROOT/installer/custom-install-target.sh" "$INITRD_TREE/custom-install-target.sh"
+cp "$ROOT/installer/custom-apply-firmware.sh" "$INITRD_TREE/custom-apply-firmware.sh"
+mkdir -p "$INITRD_TREE/custom-firmware"
+for package in firmware-iwlwifi firmware-realtek firmware-brcm80211 firmware-atheros firmware-mediatek; do
+    cp -R "$WORK/firmware-payload/$package" "$INITRD_TREE/custom-firmware/"
+done
 cp "$UPM_BINARY" "$INITRD_TREE/upm"
 printf '%s\n' "$UPM_COMMIT" > "$INITRD_TREE/upm-version"
-chmod 0755 "$INITRD_TREE/custom-tui.sh" "$INITRD_TREE/custom-hardware-detect.sh" "$INITRD_TREE/custom-install-target.sh" "$INITRD_TREE/upm"
+chmod 0755 "$INITRD_TREE/custom-tui.sh" "$INITRD_TREE/custom-hardware-detect.sh" "$INITRD_TREE/custom-install-target.sh" "$INITRD_TREE/custom-apply-firmware.sh" "$INITRD_TREE/upm"
 mv "$INITRD_TREE/init" "$INITRD_TREE/init.custom-original"
 cat > "$INITRD_TREE/init" <<'WRAPPER'
 #!/bin/sh
+mkdir -p /proc /sys /dev
+mount -t proc proc /proc 2>/dev/null || true
+mount -t sysfs sysfs /sys 2>/dev/null || true
+mount -t devtmpfs devtmpfs /dev 2>/dev/null || true
+/bin/sh /custom-hardware-detect.sh || true
+/bin/sh /custom-apply-firmware.sh || true
 /bin/sh /custom-hardware-detect.sh || true
 /bin/sh /custom-tui.sh || true
 exec /init.custom-original "$@"
@@ -94,7 +109,7 @@ done
 xorriso -indev "$SOURCE_ISO" -outdev "$OUTPUT" -boot_image any replay "$@" -commit >/dev/null 2>&1 || die "xorriso ISO rebuild failed"
 [ -s "$OUTPUT" ] || die "ISO output empty"
 BYTES=$(wc -c < "$OUTPUT" | tr -d ' ')
-[ "$BYTES" -lt "$MAX_ISO_BYTES" ] || die "ISO exceeds 150 MiB size limit"
+[ "$BYTES" -lt "$MAX_ISO_BYTES" ] || die "ISO exceeds 250 MiB size limit"
 xorriso -indev "$OUTPUT" -toc >/dev/null 2>&1 || die "rebuilt ISO unreadable"
 xorriso -indev "$OUTPUT" -report_el_torito plain 2>&1 | grep -qi 'El Torito' || die "El Torito boot catalogue missing"
 # Verify the files in the rebuilt ISO itself, not only the staging tree.
