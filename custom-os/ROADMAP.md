@@ -1,30 +1,41 @@
 # CUSTOM OS roadmap
 
-## Boot and install
-- [x] Keep Debian mini ISO's BIOS ISOLINUX and UEFI GRUB mechanisms
-- [x] Patch both menu families to request the ISO-resident CUSTOM preseed
-- [x] Build-time assertions for both menu arguments
-- [ ] Boot actual ISO in QEMU BIOS and UEFI firmware
-- [ ] Verify preseed and profile/package handoff end-to-end
-- [ ] Complete installs to disposable BIOS and UEFI VM disks
+## Implemented in current Debian prototype
+- [x] Curated TUI choices and categorized package selections
+- [x] Validate optional package names and GitHub owner/repository metadata (record-only)
+- [x] PCI inventory using sysfs and active kernel-driver reporting
+- [x] Conservative firmware and CPU-microcode package selection
+- [x] UPM compiled into image and invoked inside Debian target chroot
+- [x] Apply custom hostname and preserve profile/report/install logs
+- [x] Keep Debian upstream BIOS ISOLINUX/Syslinux and UEFI GRUB boot paths
+- [x] Inspect boot-menu payloads in the rebuilt ISO
+- [x] Increase ISO size ceiling to 150 MiB
 
-## UPM and base systems
-- [x] Inspect Universal Package Manager implementation and supported native adapters
-- [ ] Extend UPM with target-root/chroot installation API
-- [ ] Bundle a static UPM binary into initramfs/target installer
-- [ ] Debian bootstrap and APT integration
-- [ ] Arch bootstrap and Pacman integration
-- [ ] Fedora bootstrap and DNF integration
-- [ ] openSUSE bootstrap and Zypper integration
-- [ ] Void bootstrap and XBPS integration
-- [ ] Gentoo stage3/Portage integration
+## Debian install hardening still required
+- [ ] Boot the actual ISO with SeaBIOS and OVMF/UEFI in QEMU
+- [ ] Complete target installs to disposable BIOS and UEFI disks
+- [ ] Verify all package selections, desktop tasks, display managers and user shell
+- [ ] Add hardware test matrix for Intel/AMD/NVIDIA and wireless adapters
+- [ ] Verify firmware package availability against the exact stable point release
+- [ ] Add install transaction preview, disk selection and destructive-action guardrails
+- [ ] Test failure recovery, network loss, mirror fallback and install logs
 
-## Partitioning / multi-boot
-- [ ] Disk and firmware inventory
-- [ ] Manual partition editor and dry-run transaction view
+## Multi-base roadmap
+- [x] Prepare prerequisite catalogue for Debian, Arch, Fedora, openSUSE, Void and Gentoo
+- [ ] Debian bootstrap / debootstrap backend independent of Debian Installer
+- [ ] Arch pacstrap backend and UPM Pacman validation
+- [ ] Fedora target bootstrap / DNF integration
+- [ ] openSUSE rootfs bootstrap / Zypper integration
+- [ ] Void rootfs bootstrap / XBPS integration
+- [ ] Gentoo Stage3 / Portage integration and profile selection
+- [ ] Per-base package-category mapping and CI VM installation matrix
+
+## Partitioning and multi-boot
+- [ ] Disk/firmware inventory and clear target-disk selection
+- [ ] Manual partition editor and dry-run transaction preview
 - [ ] Guided install-alongside mode
 - [ ] Safe EFI System Partition reuse
 - [ ] GRUB os-prober and Windows/Linux menu validation
-- [ ] End-to-end dual boot tests on disposable VM disks
+- [ ] End-to-end dual-boot tests on disposable VM disks
 
-No destructive disk operations before the installer can show an exact transaction preview and pass VM tests.
+No destructive disk operations before an exact transaction preview and successful disposable-VM install tests.
