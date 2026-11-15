@@ -102,8 +102,12 @@ xorriso -osirrox on -indev "$OUTPUT" -extract / "$VERIFY_ROOT" >/dev/null 2>&1 |
 [ -s "$VERIFY_ROOT/preseed/custom.cfg" ] || die "preseed payload absent from rebuilt ISO"
 VERIFY_BIOS=$(find "$VERIFY_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -l 'menu label.*Install\|label install\|default install' {} \; | sed -n '1p')
 VERIFY_UEFI=$(find "$VERIFY_ROOT" -type f -path '*/grub/grub.cfg' -print | sed -n '1p')
-[ -n "$VERIFY_BIOS" ] && grep -q 'preseed/file=/preseed/custom.cfg' "$VERIFY_BIOS" || die "rebuilt BIOS menu missing CUSTOM preseed argument"
-[ -n "$VERIFY_UEFI" ] && grep -q 'preseed/file=/preseed/custom.cfg' "$VERIFY_UEFI" || die "rebuilt UEFI menu missing CUSTOM preseed argument"
+if [ -z "$VERIFY_BIOS" ] || ! grep -q 'preseed/file=/preseed/custom.cfg' "$VERIFY_BIOS"; then
+    die "rebuilt BIOS menu missing CUSTOM preseed argument"
+fi
+if [ -z "$VERIFY_UEFI" ] || ! grep -q 'preseed/file=/preseed/custom.cfg' "$VERIFY_UEFI"; then
+    die "rebuilt UEFI menu missing CUSTOM preseed argument"
+fi
 printf '%s\n' "$BYTES" > "$DIST/custom-os-$ARCH.iso.bytes"
 sha256sum "$OUTPUT" > "$OUTPUT.sha256"
 printf 'CUSTOM ISO build passed; size %s bytes. UPM commit %s.\n' "$BYTES" "$UPM_COMMIT"
