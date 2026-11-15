@@ -4,12 +4,14 @@
 - [x] Curated TUI choices and categorized package selections
 - [x] Validate optional package names and GitHub owner/repository metadata (record-only)
 - [x] PCI inventory using sysfs and active kernel-driver reporting
+- [x] Mount procfs/sysfs before early hardware detection
+- [x] Stage only detected Wi-Fi firmware before installer network setup
 - [x] Conservative firmware and CPU-microcode package selection
 - [x] UPM compiled into image and invoked inside Debian target chroot
 - [x] Apply custom hostname and preserve profile/report/install logs
 - [x] Keep Debian upstream BIOS ISOLINUX/Syslinux and UEFI GRUB boot paths
 - [x] Inspect boot-menu payloads in the rebuilt ISO
-- [x] Increase ISO size ceiling to 150 MiB
+- [x] Increase ISO size ceiling to 250 MiB for firmware payloads
 
 ## Debian install hardening still required
 - [ ] Boot the actual ISO with SeaBIOS and OVMF/UEFI in QEMU
