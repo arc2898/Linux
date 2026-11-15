@@ -33,14 +33,16 @@ jobs:
           sh -n custom-os/installer/custom-tui.sh
           sh -n custom-os/installer/custom-hardware-detect.sh
           sh -n custom-os/installer/custom-install-target.sh
+          sh -n custom-os/installer/custom-apply-firmware.sh
           sh -n custom-os/scripts/build-iso.sh
           sh -n custom-os/tests/test-installer.sh
           sh -n custom-os/tests/test-hardware-detect.sh
+          sh -n custom-os/tests/test-firmware-stage.sh
           sh -n custom-os/tests/qemu-smoke.sh
       - name: Run static and hardware fixture tests
         run: sh custom-os/tests/test-installer.sh
       - name: ShellCheck
-        run: shellcheck -s sh custom-os/installer/custom-tui.sh custom-os/installer/custom-hardware-detect.sh custom-os/installer/custom-install-target.sh custom-os/scripts/build-iso.sh custom-os/tests/test-installer.sh custom-os/tests/test-hardware-detect.sh custom-os/tests/qemu-smoke.sh
+        run: shellcheck -s sh custom-os/installer/custom-tui.sh custom-os/installer/custom-hardware-detect.sh custom-os/installer/custom-install-target.sh custom-os/installer/custom-apply-firmware.sh custom-os/scripts/build-iso.sh custom-os/tests/test-installer.sh custom-os/tests/test-hardware-detect.sh custom-os/tests/test-firmware-stage.sh custom-os/tests/qemu-smoke.sh
   build-iso:
     name: Build and verify UPM-enabled network installer ISO
     runs-on: ubuntu-latest
@@ -73,6 +75,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y curl xorriso gzip cpio file qemu-system-x86 coreutils shellcheck
+      - name: Download and unpack Debian stable wireless firmware
+        run: |
+          mkdir -p custom-os/.build/firmware-debs custom-os/.build/firmware-payload
+          sudo docker run --rm \
+            -v "$GITHUB_WORKSPACE/custom-os/.build/firmware-debs:/out/debs" \
+            -v "$GITHUB_WORKSPACE/custom-os/.build/firmware-payload:/out/payload" \
+            debian:stable-slim sh -ec '
+              printf "deb http://deb.debian.org/debian stable main non-free-firmware\\n" > /etc/apt/sources.list
+              rm -f /etc/apt/sources.list.d/debian.sources
+              apt-get update
+              cd /out/debs
+              apt-get download firmware-iwlwifi firmware-realtek firmware-brcm80211 firmware-atheros firmware-mediatek
+              for deb in *.deb; do
+                package=$(dpkg-deb -f "$deb" Package)
+                mkdir -p "/out/payload/$package"
+                dpkg-deb -x "$deb" "/out/payload/$package"
+              done
+            '
       - name: Build ISO
         run: sudo sh custom-os/scripts/build-iso.sh
       - name: Smoke-test CUSTOM TUI in QEMU
@@ -83,7 +103,7 @@ jobs:
           mib=$(awk -v b="$bytes" 'BEGIN { printf "%.2f", b/1048576 }')
           echo "CUSTOM_ISO_BYTES=$bytes" >> "$GITHUB_ENV"
           echo "CUSTOM_ISO_MIB=$mib" >> "$GITHUB_ENV"
-          test "$bytes" -lt 157286400
+          test "$bytes" -lt 262144000
           file custom-os/dist/custom-os-amd64.iso
           sha256sum -c custom-os/dist/custom-os-amd64.iso.sha256
           xorriso -indev custom-os/dist/custom-os-amd64.iso -report_el_torito plain
@@ -104,10 +124,10 @@ jobs:
             echo "## CUSTOM OS ISO build"
             echo ""
             echo "- Target: Debian stable amd64"
-            echo "- ISO limit: 150 MiB"
+            echo "- ISO limit: 250 MiB"
             echo "- Size in bytes: $(printenv CUSTOM_ISO_BYTES || echo 'not measured')"
             echo "- Size in MiB: $(printenv CUSTOM_ISO_MIB || echo 'not measured')"
             echo "- UPM source: $UPM_COMMIT"
-            echo "- Firmware: selected using PCI hardware inventory; no vendor driver scripts"
+            echo "- Firmware: selected by PCI inventory; detected wireless firmware staged before installer networking"
             echo "- Artifact: custom-os-network-installer-amd64 (only if upload passed)"
           } >> "$GITHUB_STEP_SUMMARY"
