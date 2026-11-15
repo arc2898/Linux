@@ -16,6 +16,6 @@ CUSTOM_SYSFS_ROOT="$SYS" CUSTOM_PROC_ROOT="$PROC" CUSTOM_STATE_DIR="$OUT" sh "$R
 grep -qx 'firmware-iwlwifi' "$OUT/hardware-packages.txt"
 grep -qx 'firmware-nvidia-graphics' "$OUT/hardware-packages.txt"
 grep -qx 'intel-microcode' "$OUT/hardware-packages.txt"
-! grep -qx 'firmware-realtek' "$OUT/hardware-packages.txt"
+if grep -qx 'firmware-realtek' "$OUT/hardware-packages.txt"; then echo 'Unexpected Realtek firmware recommendation' >&2; exit 1; fi
 grep -q 'kernel-driver=unbound' "$OUT/hardware-report.txt"
 printf 'Hardware detection fixture tests passed.\n'
