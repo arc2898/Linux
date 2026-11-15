@@ -124,7 +124,7 @@ xorriso -indev "$OUTPUT" -report_el_torito plain 2>&1 | grep -qi 'El Torito' || 
 # Verify the files in the rebuilt ISO itself, not only the staging tree.
 xorriso -osirrox on -indev "$OUTPUT" -extract / "$VERIFY_ROOT" >/dev/null 2>&1 || die "rebuilt ISO extraction failed"
 [ -s "$VERIFY_ROOT/preseed/custom.cfg" ] || die "preseed payload absent from rebuilt ISO"
-VERIFY_BIOS=$(find "$VERIFY_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -l 'menu label.*Install\|label install\|default install' {} \; | sed -n '1p')
+VERIFY_BIOS=$(find "$VERIFY_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -lE '^[[:space:]]*append[[:space:]]' {} \; | sed -n '1p')
 VERIFY_UEFI=$(find "$VERIFY_ROOT" -type f -path '*/grub/grub.cfg' -print | sed -n '1p')
 if [ -z "$VERIFY_BIOS" ] || ! grep -q 'preseed/file=/preseed/custom.cfg' "$VERIFY_BIOS"; then
     die "rebuilt BIOS menu missing CUSTOM preseed argument"
