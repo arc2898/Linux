@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: custom-os-iso-\${{ github.ref }}
+  group: custom-os-iso-${{ github.ref }}
   cancel-in-progress: true
 env:
   UPM_COMMIT: 37d22bcef1b0f3e9da0ec215cdc2485fe339755f
