@@ -15,7 +15,7 @@ mkdir -p "$WORK"
 # Inputs: system name, DE, display manager, WM, shell, icon, five category
 # lists, extra package list, and optional GitHub component.
 set +e
-printf 'custom\nnone\nnone\nnone\nbash\nnone\n\n\n\n\n\n\n\n' |
+printf 'custom\nnone\nnone\nbash\nnone\n\n\n\n\n\n\n' |
   timeout 60s qemu-system-x86_64 -machine pc,accel=tcg -m 1024 -smp 1 \
     -display none -serial stdio -monitor none -no-reboot -no-shutdown \
     -kernel "$KERNEL" -initrd "$INITRD" \
