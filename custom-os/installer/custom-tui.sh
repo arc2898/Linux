@@ -120,7 +120,7 @@ for package in $PACKAGES; do printf '%s\n' "$package" >> "$PACKAGE_FILE"; done
 } > "$PROFILE"
 cp "$PROFILE" "$STATE_DIR/profile.env"
 cp "$PACKAGE_FILE" "$STATE_DIR/packages.txt"
-[ ! -f /custom-install-target.sh ] || cp /custom-install-target.sh "$STATE_DIR/install-target.sh"
+[ ! -f /custom-install-target.sh ] || cp /custom-install-target.sh "$STATE_DIR/custom-install-target.sh"
 [ ! -f /upm ] || cp /upm "$STATE_DIR/upm"
 [ ! -f /upm-version ] || cp /upm-version "$STATE_DIR/upm-version"
 printf '\nDetected hardware and active kernel drivers:\n'
