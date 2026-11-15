@@ -1,40 +1,37 @@
-# CUSTOM OS — network installer
+# CUSTOM OS — selective network installer
 
-CUSTOM is a system builder, not a fixed distribution.
+CUSTOM is a customizable Linux system builder, not a fixed distribution. The current image is a Debian stable amd64 installer prototype. Do not treat the other distribution profiles as installable yet.
 
-## Boot choice
+## What is integrated
 
-The current amd64 network installer uses Debian's upstream boot stack: **ISOLINUX/Syslinux for legacy BIOS and GRUB for UEFI**. It keeps those vendor boot mechanisms intact while patching both kernel command lines. GRUB is also the selected installed-system bootloader for this Debian prototype.
+- **Hardware inventory:** scans PCI devices through Linux sysfs before the TUI. The report includes PCI vendor/device/class IDs and the currently bound kernel driver.
+- **Selective firmware:** known Wi-Fi and GPU vendor/class mappings add only their Debian firmware packages; Intel/AMD CPU detection adds the matching microcode. Unknown devices are reported but do not trigger guessed packages.
+- **Kernel drivers:** normal in-tree drivers are supplied by the Debian kernel and loaded through kernel hardware probing. CUSTOM does not layer duplicate vendor drivers or DKMS modules on top automatically.
+- **Curated TUI:** desktop environment, display manager, window manager, login shell, icon theme, and package categories (terminal, internet, office/creative, development, system utilities), with validated optional package names.
+- **Custom identity:** stores a validated system name and profile under /etc/custom, applies the hostname, and records the selected configuration.
+- **UPM package install:** compiles a pinned Linux amd64 UPM binary into the ISO. Debian Installer late_command copies it to the target and runs its APT adapter inside the target chroot; package actions do not run in the installer RAM environment.
+- **Boot:** retains upstream Debian ISOLINUX/Syslinux for legacy BIOS and GRUB for UEFI. Debian Installer selects and installs GRUB for the target system.
 
-## Installation and packages
+## Hardware driver policy
 
-The ISO is a network installer. It boots into the CUSTOM TUI, records the user's package selections in the installer initramfs, and then hands control to Debian Installer. A static preseed file is included in the ISO and requested by both BIOS and UEFI menu entries. Debian Installer's target phase is intended to install the requested packages with APT; package actions must run against the target root, not the RAM-based installer.
+The detector uses sysfs and does not depend on lspci being present in the installer initramfs. It uses conservative mappings for Intel, Realtek, Broadcom, Atheros/Qualcomm and MediaTek wireless firmware, plus Intel, AMD and NVIDIA graphics firmware. It records kernel driver bindings for all detected PCI devices. It does not install proprietary NVIDIA modules, Broadcom STA, DKMS or other third-party driver stacks automatically; these require explicit compatibility and Secure Boot checks. Firmware selection is a recommendation from vendor/class IDs, not a successful device-function test.
+
+Debian stable must have its non-free-firmware component enabled for firmware and microcode packages. The ISO's preseed enables that component. The target package operation is best-effort and logs status under /var/log/custom-install.log and /etc/custom/install-status.
 
 ## Universal Package Manager
 
-The [Universal Package Manager](https://github.com/arc2898/Universal-Package-Manager) is a Go CLI which already has native adapters for:
-- Debian/Ubuntu: APT
-- Arch: Pacman
-- Fedora: DNF
-- openSUSE/SUSE: Zypper
-- Void: XBPS
-- Gentoo: Portage/emerge
+UPM source: https://github.com/arc2898/Universal-Package-Manager
 
-UPM currently executes commands against the running host; it does not expose a target-root or offline-root install API. Therefore this installer must not blindly call `upm install` from its initramfs. The integration plan is to extend UPM with an explicit target-root backend (or run it in the target chroot) and compile it into the installer. For this first Debian image, APT in the target phase is correct.
+CUSTOM builds UPM from a pinned commit and runs it inside Debian Installer's target chroot. UPM therefore reads the target's os-release and uses the target's native manager. The UPM chroot-support work is in a separate draft PR: https://github.com/arc2898/Universal-Package-Manager/pull/1. The image pins commit 37d22bcef1b0f3e9da0ec215cdc2485fe339755f; it is not yet merged into UPM main.
 
-The first ISO still supports Debian stable amd64 only. Other bases need their own bootstrap and installation adapters; UPM supplies package operations, not base-system installation.
+## Base-system coverage
 
-## Build and checks
+Debian stable amd64 is the only active installation backend. The prerequisite catalogue for Debian, Arch, Fedora, openSUSE, Void and Gentoo is in profiles/base-prerequisites.md. Arch requires pacstrap, Fedora a DNF/Anaconda deployment backend, openSUSE a rootfs bootstrap, Void an XBPS rootfs and Gentoo a Stage3 + Portage process. UPM cannot replace those base-system bootstrappers.
 
-Install `curl xorriso gzip cpio coreutils`, then:
-```sh
-sudo sh custom-os/scripts/build-iso.sh
-sh custom-os/tests/test-installer.sh
-```
+## Build and tests
 
-The build checks ISO readability, El Torito boot metadata, BIOS and UEFI menu preseed arguments, and the under-100-MiB target. A full target-disk install remains a separate VM test.
+The GitHub Actions workflow tests shell syntax, runs a synthetic hardware-detection fixture, tests UPM, compiles UPM statically for Linux amd64, builds the ISO, checks BIOS/UEFI menu payloads in the rebuilt ISO, and smoke-tests the TUI by booting its kernel/initrd directly in QEMU.
 
+The image size ceiling is 150 MiB to leave room for bundled tooling and selected support files. The ISO build emits a byte count and SHA256 checksum.
 
-## Universal Package Manager integration status
-
-The linked Universal Package Manager (UPM) is written in Go and currently exposes a CLI that operates on the running host. It has package adapters for APT, Pacman, DNF, Zypper, XBPS and Portage. It does not yet provide a target-root/offline-root installation API. For this Debian installer prototype the selected package list is installed into the Debian target by APT during Debian Installer late_command; calling UPM inside the initramfs would target the installer environment, not the target installation. Full UPM integration and non-Debian base installers remain roadmap work.
+**Not yet proven:** actual firmware boot of the ISO on BIOS and UEFI VMs, a complete target-disk installation, package installation outcomes across desktop choices, real hardware coverage, partition editing, dual boot, rollback and recovery. Do not install on a production disk yet.
