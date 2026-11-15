@@ -1,6 +1,7 @@
 #!/bin/sh
 set -u
 set -f
+# shellcheck disable=SC2086,SC2154
 exec </dev/console >/dev/console 2>&1 || exit 0
 STATE_DIR=/var/lib/custom
 PROFILE=/tmp/custom-profile.env
@@ -68,10 +69,11 @@ case "$DESKTOP" in
     cinnamon) add_package task-cinnamon-desktop ;; lxqt) add_package task-lxqt-desktop ;;
 esac
 case "$DESKTOP" in
-    gnome) DEFAULT_DM=gdm3 ;; kde-plasma) DEFAULT_DM=sddm ;;
-    xfce|mate|cinnamon|lxqt) DEFAULT_DM=lightdm ;; *) DEFAULT_DM=none ;;
+    gnome) DISPLAY_MANAGER=$(choose 'Display manager (compatible with GNOME)' gdm3 none gdm3) ;;
+    kde-plasma) DISPLAY_MANAGER=$(choose 'Display manager (compatible with KDE)' sddm none sddm) ;;
+    xfce|mate|cinnamon|lxqt) DISPLAY_MANAGER=$(choose 'Display manager (compatible with selected desktop)' lightdm none lightdm) ;;
+    *) DISPLAY_MANAGER=none; printf 'No display manager selected because no desktop environment is installed.\\n' ;;
 esac
-DISPLAY_MANAGER=$(choose 'Display manager' "$DEFAULT_DM" none lightdm sddm gdm3)
 case "$DISPLAY_MANAGER" in lightdm|sddm|gdm3) add_package "$DISPLAY_MANAGER" ;; esac
 WINDOW_MANAGER=$(choose 'Window manager (optional)' none none i3 openbox bspwm awesome sway)
 case "$WINDOW_MANAGER" in
