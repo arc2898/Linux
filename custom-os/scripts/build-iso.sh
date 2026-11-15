@@ -81,21 +81,30 @@ d-i grub-installer/with_other_os boolean true
 d-i preseed/late_command string /bin/sh /var/lib/custom/install-target.sh
 PRESEED
 
-find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -print |
-while IFS= read -r cfg; do
-    case "$cfg" in
-        */grub.cfg|*/txt.cfg|*/menu.cfg|*/isolinux.cfg|*/syslinux.cfg)
-            if grep -q -- '---' "$cfg" && ! grep -q 'preseed/file=/preseed/custom.cfg' "$cfg"; then
-                sed 's#---#--- preseed/file=/preseed/custom.cfg#g' "$cfg" > "$cfg.tmp"
-                mv "$cfg.tmp" "$cfg"
-            fi
-            ;;
-    esac
-done
-BIOS_CFG=$(find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -l 'menu label.*Install\|label install\|default install' {} \; | sed -n '1p')
+# Debian Syslinux may split menu labels and kernel append commands across
+# included files. Patch every Syslinux append line, not a guessed filename.
+BIOS_CFG=$(find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -lE '^[[:space:]]*append[[:space:]]' {} \; | sed -n '1p')
 UEFI_CFG=$(find "$ISO_ROOT" -type f -path '*/grub/grub.cfg' -print | sed -n '1p')
-[ -n "$BIOS_CFG" ] || die "could not discover Debian BIOS Syslinux menu"
+[ -n "$BIOS_CFG" ] || die "could not discover Debian BIOS Syslinux append config"
 [ -n "$UEFI_CFG" ] || die "could not discover Debian UEFI GRUB menu"
+
+find "$ISO_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -lE '^[[:space:]]*append[[:space:]]' {} \; |
+while IFS= read -r cfg; do
+    if ! grep -q 'preseed/file=/preseed/custom.cfg' "$cfg"; then
+        sed -E '/^[[:space:]]*append[[:space:]]/ s#$# preseed/file=/preseed/custom.cfg#' "$cfg" > "$cfg.tmp"
+        mv "$cfg.tmp" "$cfg"
+    fi
+done
+if ! grep -q 'preseed/file=/preseed/custom.cfg' "$UEFI_CFG"; then
+    if grep -q -- '---' "$UEFI_CFG"; then
+        sed 's#---#--- preseed/file=/preseed/custom.cfg#g' "$UEFI_CFG" > "$UEFI_CFG.tmp"
+    elif grep -qE '^[[:space:]]*(linux|linuxefi)[[:space:]]' "$UEFI_CFG"; then
+        sed -E '/^[[:space:]]*(linux|linuxefi)[[:space:]]/ s#$# preseed/file=/preseed/custom.cfg#' "$UEFI_CFG" > "$UEFI_CFG.tmp"
+    else
+        die "could not find a GRUB kernel command to patch"
+    fi
+    mv "$UEFI_CFG.tmp" "$UEFI_CFG"
+fi
 grep -q 'preseed/file=/preseed/custom.cfg' "$BIOS_CFG" || die "preseed argument absent from BIOS menu"
 grep -q 'preseed/file=/preseed/custom.cfg' "$UEFI_CFG" || die "preseed argument absent from UEFI menu"
 [ -s "$ISO_ROOT/preseed/custom.cfg" ] || die "preseed payload missing"
