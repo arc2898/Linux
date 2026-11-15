@@ -4,8 +4,8 @@ CUSTOM is a customizable Linux system builder, not a fixed distribution. The cur
 
 ## What is integrated
 
-- **Hardware inventory:** scans PCI devices through Linux sysfs before the TUI. The report includes PCI vendor/device/class IDs and the currently bound kernel driver.
-- **Selective firmware:** known Wi-Fi and GPU vendor/class mappings add only their Debian firmware packages; Intel/AMD CPU detection adds the matching microcode. Unknown devices are reported but do not trigger guessed packages.
+- **Hardware inventory:** mounts procfs/sysfs before running detection, then scans PCI devices before the TUI. The report includes PCI vendor/device/class IDs and the currently bound kernel driver.
+- **Selective firmware:** detected wireless adapters receive only their mapped Debian firmware payload in the installer initramfs before Debian Installer starts network setup. After target installation, UPM installs the matching firmware package plus mapped GPU firmware and CPU microcode. Unknown devices do not trigger guessed packages.
 - **Kernel drivers:** normal in-tree drivers are supplied by the Debian kernel and loaded through kernel hardware probing. CUSTOM does not layer duplicate vendor drivers or DKMS modules on top automatically.
 - **Curated TUI:** desktop environment, display manager, window manager, login shell, icon theme, and package categories (terminal, internet, office/creative, development, system utilities), with validated optional package names.
 - **Custom identity:** stores a validated system name and profile under /etc/custom, applies the hostname, and records the selected configuration.
@@ -14,7 +14,7 @@ CUSTOM is a customizable Linux system builder, not a fixed distribution. The cur
 
 ## Hardware driver policy
 
-The detector uses sysfs and does not depend on lspci being present in the installer initramfs. It uses conservative mappings for Intel, Realtek, Broadcom, Atheros/Qualcomm and MediaTek wireless firmware, plus Intel, AMD and NVIDIA graphics firmware. It records kernel driver bindings for all detected PCI devices. It does not install proprietary NVIDIA modules, Broadcom STA, DKMS or other third-party driver stacks automatically; these require explicit compatibility and Secure Boot checks. Firmware selection is a recommendation from vendor/class IDs, not a successful device-function test.
+The detector uses sysfs and does not depend on lspci being present in the installer initramfs. The build embeds Debian stable payloads for Intel, Realtek, Broadcom, Atheros/Qualcomm and MediaTek wireless firmware; at boot, only the package mapped to detected PCI Wi-Fi vendor/class IDs is copied into /lib/firmware and the matching PCI device is reprobed. It also maps Intel, AMD and NVIDIA graphics firmware for the target installation. It records kernel driver bindings for all detected PCI devices. It does not install proprietary NVIDIA modules, Broadcom STA, DKMS or other third-party driver stacks automatically; these require explicit compatibility and Secure Boot checks. Firmware selection is a recommendation from vendor/class IDs, not a successful device-function test.
 
 Debian stable must have its non-free-firmware component enabled for firmware and microcode packages. The ISO's preseed enables that component. The target package operation is best-effort and logs status under /var/log/custom-install.log and /etc/custom/install-status.
 
@@ -32,6 +32,6 @@ Debian stable amd64 is the only active installation backend. The prerequisite ca
 
 The GitHub Actions workflow tests shell syntax, runs a synthetic hardware-detection fixture, tests UPM, compiles UPM statically for Linux amd64, builds the ISO, checks BIOS/UEFI menu payloads in the rebuilt ISO, and smoke-tests the TUI by booting its kernel/initrd directly in QEMU.
 
-The image size ceiling is 150 MiB to leave room for bundled tooling and selected support files. The ISO build emits a byte count and SHA256 checksum.
+The image size ceiling is 250 MiB to leave room for bundled tooling and selected support files. The ISO build emits a byte count and SHA256 checksum.
 
 **Not yet proven:** actual firmware boot of the ISO on BIOS and UEFI VMs, a complete target-disk installation, package installation outcomes across desktop choices, real hardware coverage, partition editing, dual boot, rollback and recovery. Do not install on a production disk yet.
