@@ -132,7 +132,6 @@ xorriso -osirrox on -indev "$OUTPUT" -extract / "$VERIFY_ROOT" >/dev/null 2>&1 |
 [ -s "$VERIFY_ROOT/preseed/custom.cfg" ] || die "preseed payload absent from rebuilt ISO"
 VERIFY_SYS_CFG_LIST="$WORK/verify-syslinux-configs.list"
 find "$VERIFY_ROOT" -type f \( -name '*.cfg' -o -name '*.conf' \) -exec grep -lE '^[[:space:]]*append[[:space:]]' {} \; > "$VERIFY_SYS_CFG_LIST"
-VERIFY_BIOS=$(sed -n '1p' "$VERIFY_SYS_CFG_LIST")
 VERIFY_UEFI=$(find "$VERIFY_ROOT" -type f -path '*/grub/grub.cfg' -print | sed -n '1p')
 [ -s "$VERIFY_SYS_CFG_LIST" ] || die "rebuilt ISO contains no BIOS Syslinux append commands"
 while IFS= read -r cfg; do
